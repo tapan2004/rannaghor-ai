@@ -1069,3 +1069,74 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Ingredient quantity input inline styling */
+.quantity-select-inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.quantity-val-input {
+  width: 50px;
+  padding: 0.25rem;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background-color: var(--bg);
+  color: var(--text);
+  text-align: center;
+  outline: none;
+}
+
+.quantity-val-input:focus {
+  border-color: var(--primary);
+}
+
+.quantity-unit-select {
+  padding: 0.25rem;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background-color: var(--bg);
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+}
+
+/* Category specific manual additions styling */
+.category-custom-add {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--border);
+  width: 100%;
+}
+
+.custom-add-row {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.custom-add-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background-color: var(--bg);
+  color: var(--text);
+  outline: none;
+}
+
+.custom-add-input:focus {
+  border-color: var(--primary);
+}
+
+/* Make sure active spices row quantity inputs align nicely */
+.spice-qty-wrapper input, .spice-qty-wrapper select {
+  outline: none;
+}

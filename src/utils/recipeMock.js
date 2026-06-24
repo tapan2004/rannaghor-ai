@@ -1,13 +1,18 @@
 export const getMockRecipes = (proteins, veggies, spices, preferences) => {
-  const recipes = [];
-
   // Helper check
   const hasVeg = (id) => veggies.some(v => v.id === id);
   const hasProt = (id) => proteins.some(p => p.id === id);
 
-  // Recipe 1: Alu Posto (If potato and posto are selected, or default veg)
+  const candidates = [];
+
+  // Recipe 1: Alu Posto (Simple, Veg)
   if ((hasVeg('potato') && hasProt('posto')) || (preferences.diet === 'veg' && hasVeg('potato'))) {
-    recipes.push({
+    candidates.push({
+      id: 'alu_posto',
+      style: 'simple',
+      diet: 'veg',
+      calories: '280 kcal',
+      protein: '6g',
       name_en: "Classic Bengali Alu Posto",
       name_bn: "ঐতিহ্যবাহী আলু পোস্ত",
       description_en: "A comforting and iconic Bengali dish made of potatoes cooked in a rich, nutty poppy seed paste.",
@@ -47,9 +52,14 @@ export const getMockRecipes = (proteins, veggies, spices, preferences) => {
     });
   }
 
-  // Recipe 2: Bengali Fish Curry (Machher Jhol)
-  if (hasProt('fish') && preferences.diet === 'non-veg') {
-    recipes.push({
+  // Recipe 2: Bengali Fish Curry (Machher Jhol) (Rich, Non-Veg)
+  if (hasProt('fish') && preferences.diet !== 'veg') {
+    candidates.push({
+      id: 'shorshe_maach',
+      style: 'rich',
+      diet: 'non-veg',
+      calories: '320 kcal',
+      protein: '22g',
       name_en: "Shorshe Maach (Mustard Fish Curry)",
       name_bn: "সর্ষে ইলিশ / সর্ষে পোনা",
       description_en: "Rich and pungent mustard-based fish curry that is a cornerstone of Bengali cuisine.",
@@ -90,9 +100,14 @@ export const getMockRecipes = (proteins, veggies, spices, preferences) => {
     });
   }
 
-  // Recipe 3: Dim Kosha (Egg Curry)
-  if (hasProt('egg') && recipes.length < 3) {
-    recipes.push({
+  // Recipe 3: Dim Kosha (Egg Curry) (Rich, Non-Veg)
+  if (hasProt('egg') && preferences.diet !== 'veg') {
+    candidates.push({
+      id: 'dim_kosha',
+      style: 'rich',
+      diet: 'non-veg',
+      calories: '290 kcal',
+      protein: '14g',
       name_en: "Spicy Bengali Dim Kosha",
       name_bn: "ডিম কষা",
       description_en: "Boiled eggs coated in a rich, spicy, and caramelised onion-tomato masala sauce.",
@@ -134,9 +149,14 @@ export const getMockRecipes = (proteins, veggies, spices, preferences) => {
     });
   }
 
-  // Recipe 4: Begun Bhaja (If eggplant is selected)
-  if (hasVeg('begun') && recipes.length < 3) {
-    recipes.push({
+  // Recipe 4: Begun Bhaja (Simple, Veg)
+  if (hasVeg('begun')) {
+    candidates.push({
+      id: 'begun_bhaja',
+      style: 'simple',
+      diet: 'veg',
+      calories: '180 kcal',
+      protein: '2g',
       name_en: "Bengali Begun Bhaja (Fried Eggplant)",
       name_bn: "বেগুন ভাজা",
       description_en: "Thick round slices of eggplant marinated in salt and turmeric, fried to crispy golden perfection.",
@@ -174,9 +194,14 @@ export const getMockRecipes = (proteins, veggies, spices, preferences) => {
     });
   }
 
-  // Recipe: Bengali Chicken Kosha (Chicken Curry)
-  if (hasProt('chicken') && recipes.length < 3) {
-    recipes.push({
+  // Recipe 5: Chicken Kosha (Rich, Non-Veg)
+  if (hasProt('chicken') && preferences.diet !== 'veg') {
+    candidates.push({
+      id: 'chicken_kosha',
+      style: 'rich',
+      diet: 'non-veg',
+      calories: '420 kcal',
+      protein: '28g',
       name_en: "Bengali Chicken Kosha (Spicy Chicken Curry)",
       name_bn: "চিকেন কষা / মুরগির মাংসের ঝোল",
       description_en: "A classic Bengali Sunday lunch favorite, featuring chicken pieces slow-cooked in a rich, spicy onion-ginger-garlic gravy.",
@@ -223,9 +248,14 @@ export const getMockRecipes = (proteins, veggies, spices, preferences) => {
     });
   }
 
-  // Recipe: Chingri Malai Curry (Prawn Coconut Curry)
-  if (hasProt('prawn') && recipes.length < 3) {
-    recipes.push({
+  // Recipe 6: Chingri Malai Curry (Rich, Non-Veg)
+  if (hasProt('prawn') && preferences.diet !== 'veg') {
+    candidates.push({
+      id: 'chingri_malai',
+      style: 'rich',
+      diet: 'non-veg',
+      calories: '380 kcal',
+      protein: '18g',
       name_en: "Chingri Malai Curry (Prawn Coconut Curry)",
       name_bn: "চিংড়ি মালাই কারি",
       description_en: "A rich and elegant traditional Bengali dish where prawns are simmered in a luscious coconut milk gravy.",
@@ -263,16 +293,21 @@ export const getMockRecipes = (proteins, veggies, spices, preferences) => {
         "আদা বাটা, হলুদ, লঙ্কা গুঁড়ো ও লবণ দিন। সামান্য জল দিয়ে মশলা ২ মিনিট কষান।",
         "নারকেলের দুধ কড়াইতে ঢেলে দিন, ভালো করে মিশিয়ে মাঝারি আঁচে ফুটতে দিন।",
         "ভাজা চিংড়ি ও চেরা কাঁচা লঙ্কা দিন। ঢাকা দিয়ে কম আঁচে ৫-৭ মিনিট রান্না হতে দিন।",
-        "নামানোর আগে ওপর থেকে ১ চা চামচ ghee ছড়িয়ে দিন এবং গরম গরম বাসমতি চালের ভাতের সাথে পরিবেশন করুন।"
+        "নামানোর আগে ওপর থেকে ১ চা চামচ ঘি ছড়িয়ে দিন এবং গরম গরম বাসমতি চালের ভাতের সাথে পরিবেশন করুন।"
       ],
       chef_tip_en: "Using fresh coconut milk instead of canned coconut milk gives a much sweeter and richer flavor.",
       chef_tip_bn: "ক্যানের বদলে তাজা নারকেল কোরানো থেকে বের করা দুধ ব্যবহার করলে স্বাদ সবচেয়ে মিষ্টি ও চমৎকার হয়।"
     });
   }
 
-  // Recipe: Kosha Mangsho (Bengali Mutton Curry)
-  if (hasProt('mutton') && recipes.length < 3) {
-    recipes.push({
+  // Recipe 7: Kosha Mangsho (Rich, Non-Veg)
+  if (hasProt('mutton') && preferences.diet !== 'veg') {
+    candidates.push({
+      id: 'kosha_mangsho',
+      style: 'rich',
+      diet: 'non-veg',
+      calories: '510 kcal',
+      protein: '32g',
       name_en: "Bengali Kosha Mangsho (Spicy Mutton Curry)",
       name_bn: "কষা মাংস",
       description_en: "An iconic Bengali mutton dish slow-cooked over hours in a rich, dark onion-tomato gravy with aromatic spices.",
@@ -314,9 +349,14 @@ export const getMockRecipes = (proteins, veggies, spices, preferences) => {
     });
   }
 
-  // Recipe: Niramish Paneerer Dalna (Bengali Paneer Curry)
-  if (hasProt('paneer') && recipes.length < 3) {
-    recipes.push({
+  // Recipe 8: Niramish Paneerer Dalna (Rich, Veg)
+  if (hasProt('paneer')) {
+    candidates.push({
+      id: 'paneer_dalna',
+      style: 'rich',
+      diet: 'veg',
+      calories: '340 kcal',
+      protein: '12g',
       name_en: "Niramish Paneerer Dalna (Bengali Paneer Curry)",
       name_bn: "নিরামিষ পনিরের ডালনা",
       description_en: "Cubes of fried cottage cheese (paneer) and potatoes simmered in a light, fragrant ginger-cumin tomato gravy without onion or garlic.",
@@ -363,9 +403,143 @@ export const getMockRecipes = (proteins, veggies, spices, preferences) => {
     });
   }
 
-  // Recipe 5: Generic Pataler Dalna (Pointed Gourd curry) or Alur Dom
-  if (recipes.length === 0) {
-    recipes.push({
+  // Recipe 9: Egg Roll (Junk, Non-Veg)
+  if (hasProt('egg') && preferences.diet !== 'veg') {
+    candidates.push({
+      id: 'egg_roll',
+      style: 'junk',
+      diet: 'non-veg',
+      calories: '350 kcal',
+      protein: '11g',
+      name_en: "Kolkata Street Style Egg Roll",
+      name_bn: "ডিম রোল (কলকাতা স্ট্রিট স্টাইল)",
+      description_en: "A legendary Kolkata street food wrap made of crispy pan-fried paratha layered with egg, crunchy onions, and zesty sauces.",
+      description_bn: "কলকাতার অত্যন্ত জনপ্রিয় ও লোভনীয় স্ট্রিট ফুড, যেখানে ভাজা পরোটার ওপরে ডিমের প্রলেপ দিয়ে পেঁয়াজ ও কুচানো কাঁচা লঙ্কা সহযোগে রোল করা হয়।",
+      prep_time: "10 mins",
+      cook_time: "10 mins",
+      difficulty: "Easy",
+      serving_size: "2 servings",
+      ingredients_used: [
+        { name_en: "Eggs", name_bn: "ডিম", amount: "2" },
+        { name_en: "Salt", name_bn: "লবণ", amount: "1/2 tsp" },
+        { name_en: "Green Chillies", name_bn: "কাঁচা লঙ্কা", amount: "2, finely chopped" }
+      ],
+      ingredients_missing: [
+        { name_en: "All-purpose flour (Maida)", name_bn: "ময়দা", amount: "1 cup for parathas" },
+        { name_en: "Cucumber & Onion", name_bn: "শসা ও পেঁয়াজ", amount: "for stuffing" },
+        { name_en: "Tomato Ketchup", name_bn: "টমেটো কেচাপ", amount: "2 tbsp" }
+      ],
+      instructions_en: [
+        "Knead maida with salt, a tsp of oil, and warm water into a soft dough. Roll into flat rounds and cook on a griddle with oil until crispy.",
+        "Beat an egg with a pinch of salt. Pour the egg onto the pan, place the paratha on top, and press down so the egg sticks.",
+        "Flip and cook until the egg is fully done. Remove from the griddle.",
+        "Place chopped onions, cucumber, green chillies, and lemon juice in the center, drizzle ketchup, roll tightly and serve."
+      ],
+      instructions_bn: [
+        "ময়দা নুন, সামান্য তেল ও জল দিয়ে মেখে নরম লেচি তৈরি করুন। পরোটা বেলে কড়াইতে তেল দিয়ে লালচে করে ভাজুন।",
+        "একটি বাটিতে ডিম নুন দিয়ে ফেটিয়ে নিন। কড়াইতে ফেটানো ডিম ঢেলে ওপর থেকে ভাজা পরোটা বসিয়ে চেপে দিন যাতে ডিম লেগে যায়।",
+        "উল্টে দিয়ে ডিম ভালো করে ভেজে নিয়ে নামিয়ে প্লেটে রাখুন।",
+        "পরোটার মাঝে কুচানো পেঁয়াজ, শসা, কাঁচা লঙ্কা ও লেবুর রস ছড়িয়ে কেচাপ দিয়ে গোল করে মুড়িয়ে পরিবেশন করুন।"
+      ],
+      chef_tip_en: "Using a mix of chili sauce and tomato ketchup gives it that authentic street-side tangy-spicy kick.",
+      chef_tip_bn: "টমেটো কেচাপের সাথে সামান্য চিলি সস মিশিয়ে দিলে একদম স্ট্রিটের আসল চটপটা স্বাদ পাওয়া যায়।"
+    });
+  }
+
+  // Recipe 10: Alur Chop (Junk, Veg)
+  if (hasVeg('potato')) {
+    candidates.push({
+      id: 'alur_chop',
+      style: 'junk',
+      diet: 'veg',
+      calories: '210 kcal',
+      protein: '3g',
+      name_en: "Bengali Alur Chop (Potato Fritters)",
+      name_bn: "আলুর চপ",
+      description_en: "A favorite evening tea-time junk snack, consisting of spiced mashed potato patties dipped in gram flour batter and deep-fried.",
+      description_bn: "বিকেলের চা-মুড়ির সাথে অত্যন্ত জনপ্রিয় মুচমুচে তৈলাক্ত পদ, যেখানে আলুর পুরকে বেসনের ব্যাটারে ডুবিয়ে ডুবো তেলে ভাজা হয়।",
+      prep_time: "15 mins",
+      cook_time: "10 mins",
+      difficulty: "Easy",
+      serving_size: "3 servings",
+      ingredients_used: [
+        { name_en: "Potatoes", name_bn: "আলু", amount: "3, boiled and mashed" },
+        { name_en: "Mustard Oil", name_bn: "সর্ষের তেল", amount: "for frying" },
+        { name_en: "Salt", name_bn: "লবণ", amount: "1 tsp" }
+      ],
+      ingredients_missing: [
+        { name_en: "Gram Flour (Besan)", name_bn: "বেসন", amount: "1 cup" },
+        { name_en: "Bhaja Masala (Roasted spices)", name_bn: "ভাজা মশলা", amount: "1 tsp" }
+      ],
+      instructions_en: [
+        "Mash the boiled potatoes with salt, bhaja masala, chopped ginger, and green chillies.",
+        "Shape the mashed potato into round flat patties.",
+        "Make a smooth batter with gram flour (besan), salt, turmeric, and water.",
+        "Dip each patty into the batter and deep fry in hot mustard oil until golden brown and crispy."
+      ],
+      instructions_bn: [
+        "সেদ্ধ আলু নুন, ভাজা মশলা, আদা কুচি ও লঙ্কা কুচি দিয়ে ভালো করে মেখে পুর বানিয়ে নিন।",
+        "মাখা আলু থেকে ছোট ছোট চ্যাপ্টা চপ আকার তৈরি করুন।",
+        "বেসন, নুন, হলুদ ও জল দিয়ে একটি ঘন মসৃণ ব্যাটার তৈরি করুন।",
+        "আলুর চপগুলো বেসনের ব্যাটারে ডুবিয়ে ডুবো তেলে লালচে ও মুচমুচে করে ভেজে তুলে নিন।"
+      ],
+      chef_tip_en: "Adding a pinch of rice flour to the besan batter makes the chop extra crunchy and keeps it crispy longer.",
+      chef_tip_bn: "বেসনের ব্যাটারে এক চামচ চালের গুঁড়ো মিশিয়ে দিলে চপ অনেক বেশি মুচমুচে হয় এবং বেশিক্ষণ মুচমুচে থাকে।"
+    });
+  }
+
+  // Recipe 11: Musur Dal (Simple, Veg)
+  if (preferences.diet === 'veg' || hasVeg('potato') || candidates.length === 0) {
+    candidates.push({
+      id: 'musur_dal',
+      style: 'simple',
+      diet: 'veg',
+      calories: '150 kcal',
+      protein: '9g',
+      name_en: "Comforting Bengali Musur Dal",
+      name_bn: "ঐতিহ্যবাহী মসুর ডাল",
+      description_en: "A light and comforting everyday Bengali red lentil dish tempered with panch phoron, garlic, and onions.",
+      description_bn: "পাঁচফোড়ন বা গোটা জিরে, পেঁয়াজ ও রসুন ফোড়ন দিয়ে রান্না করা পাতলা মসুর ডাল, যা প্রতিদিনের বাঙ্গালী ভাতের পাতের অপরিহার্য অঙ্গ।",
+      prep_time: "10 mins",
+      cook_time: "15 mins",
+      difficulty: "Easy",
+      serving_size: "3 servings",
+      ingredients_used: [
+        { name_en: "Red Lentils (Musur Dal)", name_bn: "মসুর ডাল", amount: "1 cup" },
+        { name_en: "Mustard Oil", name_bn: "সর্ষের তেল", amount: "1 tbsp" },
+        { name_en: "Turmeric Powder", name_bn: "হলুদ গুঁড়ো", amount: "1/2 tsp" },
+        { name_en: "Green Chillies", name_bn: "কাঁচা লঙ্কা", amount: "2, slit" },
+        { name_en: "Salt", name_bn: "লবণ", amount: "1 tsp" }
+      ],
+      ingredients_missing: [
+        { name_en: "Onion", name_bn: "পেঁয়াজ", amount: "1 small, chopped" },
+        { name_en: "Garlic", name_bn: "রসুন", amount: "3 cloves, minced" }
+      ],
+      instructions_en: [
+        "Wash the red lentils thoroughly and pressure cook with 2.5 cups of water, turmeric powder, and salt for 2 whistles.",
+        "Whisk the cooked lentils to a smooth consistency.",
+        "Heat mustard oil in a pan, add sliced onions and minced garlic. Sauté until golden brown.",
+        "Add slit green chillies, pour in the lentils, bring to a boil and simmer for 3 minutes."
+      ],
+      instructions_bn: [
+        "ডাল ভালো করে ধুয়ে ২.৫ কাপ জল, সামান্য হলুদ ও নুন দিয়ে প্রেসার কুকারে ২টি হুইসেল দিয়ে সেদ্ধ করে নিন।",
+        "সেদ্ধ ডাল ভালো করে ঘেঁটে মসৃণ করে নিন।",
+        "কড়াইতে সর্ষের তেল গরম করে পেঁয়াজ ও রসুন কুচি লালচে-সোনালী করে ভাজুন।",
+        "চেরা কাঁচা লঙ্কা দিয়ে ডাল কড়াইতে ঢেলে দিন এবং ৩ মিনিট ফুটিয়ে নামিয়ে নিন।"
+      ],
+      chef_tip_en: "Adding a squeeze of fresh Gondhoraj Lebu (lime) to the hot dal takes it to another level.",
+      chef_tip_bn: "গরম গরম ডালের ওপর এক টুকরো গন্ধরাজ লেবুর রস চিপে দিলে স্বাদ দ্বিগুণ হয়ে যায়।"
+    });
+  }
+
+  // Recipe 12: Niramish Alur Dom (Simple, Veg) - fallback / standard
+  if (hasVeg('potato') || candidates.length === 0) {
+    candidates.push({
+      id: 'alur_dom',
+      style: 'simple',
+      diet: 'veg',
+      calories: '240 kcal',
+      protein: '4g',
       name_en: "Niramish Alur Dom (Bengali Potato Curry)",
       name_bn: "নিরামিষ আলুর দম",
       description_en: "A delicious no-onion, no-garlic potato curry simmered in a spiced tomato and ginger gravy.",
@@ -407,5 +581,32 @@ export const getMockRecipes = (proteins, veggies, spices, preferences) => {
     });
   }
 
-  return { recipes };
+  // --- Filtering & Selection logic ---
+  let filtered = [...candidates];
+
+  // 1. Filter by Diet style
+  if (preferences.diet === 'veg') {
+    filtered = filtered.filter(c => c.diet === 'veg');
+  }
+
+  // 2. Filter by Food Style (Simple, Rich, Junk)
+  if (preferences.foodStyle && preferences.foodStyle !== 'any') {
+    const styleFiltered = filtered.filter(c => c.style === preferences.foodStyle);
+    // Only apply if it doesn't leave us with 0 recipes
+    if (styleFiltered.length > 0) {
+      filtered = styleFiltered;
+    }
+  }
+
+  // Fallback to defaults if empty
+  if (filtered.length === 0) {
+    filtered = [
+      candidates.find(c => c.id === 'alur_dom') || candidates[0]
+    ];
+  }
+
+  // Select top 3 recipes
+  const finalRecipes = filtered.slice(0, 3);
+
+  return { recipes: finalRecipes };
 };

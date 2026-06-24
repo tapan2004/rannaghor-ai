@@ -4,6 +4,7 @@ import {
   ChefHat, 
   Sliders, 
   Search, 
+  Plus,
   X, 
   Volume2, 
   VolumeX, 
@@ -77,7 +78,15 @@ const TRANSLATIONS = {
     cookTimeStat: "Cook Time",
     servings: "Servings",
     apiKeyRequired: "Note: Running in Demo Mode with pre-configured Bengali dishes. Enter a Groq API key in Settings to unlock real-time custom AI recipes!",
-    demoActive: "Demo Mode Active"
+    demoActive: "Demo Mode Active",
+    foodStyle: "Dish Style",
+    foodStyleAny: "Any Style",
+    foodStyleSimple: "Simple & Healthy",
+    foodStyleRich: "Rich & Oily",
+    foodStyleJunk: "Junk / Fast Food",
+    calories: "Calories",
+    protein: "Protein",
+    addCustomItem: "Add custom item"
   },
   bn: {
     title: "রান্নাঘর AI",
@@ -123,7 +132,7 @@ const TRANSLATIONS = {
     missingLabel: "রান্নার জন্য বাজার থেকে লাগবে:",
     usedLabel: "আপনার রান্নাঘরে আছে:",
     chefTips: "শেফের বিশেষ পরামর্শ",
-    audioRead: "রেসিপি শুনুন (অডিও)",
+    audioRead: "রেসিпи শুনুন (অডিও)",
     audioStop: "অডিও বন্ধ করুন",
     chatTitle: "শেফ রান্নাঘর-কে জিজ্ঞেস করুন",
     chatPlaceholder: "পেঁয়াজ ছাড়া কীভাবে রাঁধবেন, বা উপকরণ বদল করার উপায়...",
@@ -135,7 +144,15 @@ const TRANSLATIONS = {
     cookTimeStat: "রান্নার সময়",
     servings: "পরিবেশন",
     apiKeyRequired: "বিশেষ দ্রষ্টব্য: API Key দেওয়া নেই। সেটিংস-এ গিয়ে Groq API Key যুক্ত করলে সরাসরি কৃত্রিম বুদ্ধিমত্তার মাধ্যমে আপনার উপাদানের ওপর ভিত্তি করে রেসিপি জেনারেট হবে।",
-    demoActive: "ডেমো মোড সক্রিয়"
+    demoActive: "ডেমো মোড সক্রিয়",
+    foodStyle: "খাবারের ধরন",
+    foodStyleAny: "যেকোনো",
+    foodStyleSimple: "হালকা ও সাধারণ",
+    foodStyleRich: "রিচ ও তৈলাক্ত",
+    foodStyleJunk: "ফাস্ট ফুড / চটপটা",
+    calories: "ক্যালোরি",
+    protein: "প্রোটিন",
+    addCustomItem: "নতুন উপাদান যোগ করুন"
   }
 };
 
@@ -168,11 +185,23 @@ function App() {
   const [customInput, setCustomInput] = useState('');
   const [veggieQuery, setVeggieQuery] = useState('');
 
+  // Category specific added custom lists
+  const [addedProteins, setAddedProteins] = useState([]);
+  const [addedVegetables, setAddedVegetables] = useState([]);
+  const [addedSpices, setAddedSpices] = useState([]);
+
+  // Category specific input states
+  const [customInputs, setCustomInputs] = useState({ protein: '', vegetable: '', spice: '' });
+
+  // Ingredient quantities & units: maps ingredientId -> { qty: number, unit: string }
+  const [ingredientQuantities, setIngredientQuantities] = useState({});
+
   // Preference state
   const [diet, setDiet] = useState('any');
   const [spiceLevel, setSpiceLevel] = useState('medium');
   const [mealType, setMealType] = useState('lunchDinner');
   const [timeLimit, setTimeLimit] = useState('average');
+  const [foodStyle, setFoodStyle] = useState('any');
 
   // App running states
   const [loading, setLoading] = useState(false);
@@ -207,22 +236,36 @@ function App() {
   }, []);
 
   const handleProteinToggle = (id) => {
-    setSelectedProteins(prev => 
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    );
+    setSelectedProteins(prev => {
+      const isSelected = prev.includes(id);
+      if (!isSelected && !ingredientQuantities[id]) {
+        setIngredientQuantities(q => ({ ...q, [id]: { qty: 500, unit: 'g' } }));
+      }
+      return isSelected ? prev.filter(x => x !== id) : [...prev, id];
+    });
   };
 
   const handleVegetableToggle = (id) => {
-    setSelectedVegetables(prev => 
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    );
+    setSelectedVegetables(prev => {
+      const isSelected = prev.includes(id);
+      if (!isSelected && !ingredientQuantities[id]) {
+        setIngredientQuantities(q => ({ ...q, [id]: { qty: 500, unit: 'g' } }));
+      }
+      return isSelected ? prev.filter(x => x !== id) : [...prev, id];
+    });
   };
 
   const handleSpiceToggle = (id) => {
-    setSpiceCabinet(prev => ({
-      ...prev,
-      [id]: { ...prev[id], active: !prev[id].active }
-    }));
+    setSpiceCabinet(prev => {
+      const isActive = !prev[id]?.active;
+      if (isActive && !ingredientQuantities[id]) {
+        setIngredientQuantities(q => ({ ...q, [id]: { qty: 2, unit: 'tbsp' } }));
+      }
+      return {
+        ...prev,
+        [id]: { ...prev[id], active: isActive }
+      };
+    });
   };
 
   const handleSpiceLevelChange = (id, level) => {
@@ -230,6 +273,59 @@ function App() {
       ...prev,
       [id]: { ...prev[id], level }
     }));
+  };
+
+  const handleQuantityChange = (id, val) => {
+    setIngredientQuantities(prev => ({
+      ...prev,
+      [id]: { ...prev[id], qty: val }
+    }));
+  };
+
+  const handleUnitChange = (id, unitVal) => {
+    setIngredientQuantities(prev => ({
+      ...prev,
+      [id]: { ...prev[id], unit: unitVal }
+    }));
+  };
+
+  const handleAddCustomItem = (category) => {
+    const inputVal = customInputs[category]?.trim();
+    if (!inputVal) return;
+
+    const id = `custom_${category}_${Date.now()}`;
+    const newItem = {
+      id,
+      name: inputVal,
+      bn: inputVal,
+      icon: category === 'protein' ? '🍖' : category === 'vegetable' ? '🥦' : '🧂',
+      category: category
+    };
+
+    if (category === 'protein') {
+      setAddedProteins(prev => [...prev, newItem]);
+      setSelectedProteins(prev => [...prev, id]);
+      if (!ingredientQuantities[id]) {
+        setIngredientQuantities(q => ({ ...q, [id]: { qty: 500, unit: 'g' } }));
+      }
+    } else if (category === 'vegetable') {
+      setAddedVegetables(prev => [...prev, newItem]);
+      setSelectedVegetables(prev => [...prev, id]);
+      if (!ingredientQuantities[id]) {
+        setIngredientQuantities(q => ({ ...q, [id]: { qty: 500, unit: 'g' } }));
+      }
+    } else if (category === 'spice') {
+      setAddedSpices(prev => [...prev, newItem]);
+      setSpiceCabinet(prev => ({
+        ...prev,
+        [id]: { active: true, level: 'medium' }
+      }));
+      if (!ingredientQuantities[id]) {
+        setIngredientQuantities(q => ({ ...q, [id]: { qty: 2, unit: 'tbsp' } }));
+      }
+    }
+
+    setCustomInputs(prev => ({ ...prev, [category]: '' }));
   };
 
   const handleAddCustomIngredient = (e) => {
@@ -302,19 +398,46 @@ function App() {
     const quote = COOKING_QUOTES[Math.floor(Math.random() * COOKING_QUOTES.length)];
     setLoadingQuote(quote);
 
-    const proteinDetails = PROTEINS.filter(p => selectedProteins.includes(p.id));
-    const vegDetails = VEGETABLES.filter(v => selectedVegetables.includes(v.id));
-    const activeSpices = SPICES.filter(s => spiceCabinet[s.id].active).map(s => {
-      return `${s.name} (${s.bn})${s.hasSlider ? ` - Level: ${spiceCabinet[s.id].level}` : ''}`;
-    });
+    const allProteins = [...PROTEINS, ...addedProteins];
+    const allVegetables = [...VEGETABLES, ...addedVegetables];
+    const allSpices = [...SPICES, ...addedSpices];
+
+    const proteinDetails = allProteins
+      .filter(p => selectedProteins.includes(p.id))
+      .map(p => {
+        const qty = ingredientQuantities[p.id];
+        const qtyStr = qty ? ` (${qty.qty} ${qty.unit})` : '';
+        return `${p.name} (${p.bn})${qtyStr}`;
+      });
+
+    const vegDetails = allVegetables
+      .filter(v => selectedVegetables.includes(v.id))
+      .map(v => {
+        const qty = ingredientQuantities[v.id];
+        const qtyStr = qty ? ` (${qty.qty} ${qty.unit})` : '';
+        return `${v.name} (${v.bn})${qtyStr}`;
+      });
+
+    const activeSpices = allSpices
+      .filter(s => spiceCabinet[s.id]?.active)
+      .map(s => {
+        const qty = ingredientQuantities[s.id];
+        const qtyStr = qty ? ` (${qty.qty} ${qty.unit})` : '';
+        const levelStr = s.hasSlider ? ` - Level: ${spiceCabinet[s.id].level}` : '';
+        return `${s.name} (${s.bn})${qtyStr}${levelStr}`;
+      });
 
     const runMockRecipes = async () => {
       await new Promise(resolve => setTimeout(resolve, 1500));
       const mockResult = getMockRecipes(
-        proteinDetails,
-        vegDetails,
-        SPICES.map(s => ({ ...s, active: spiceCabinet[s.id].active, level: spiceCabinet[s.id].level })),
-        { diet, spiceLevel, mealType, timeLimit, lang }
+        allProteins.filter(p => selectedProteins.includes(p.id)),
+        allVegetables.filter(v => selectedVegetables.includes(v.id)),
+        allSpices.map(s => ({ 
+          ...s, 
+          active: !!spiceCabinet[s.id]?.active, 
+          level: spiceCabinet[s.id]?.level || 'medium' 
+        })),
+        { diet, spiceLevel, mealType, timeLimit, lang, foodStyle }
       );
       setRecipes(mockResult.recipes);
       setActiveRecipeIndex(0);
@@ -327,19 +450,21 @@ function App() {
     }
 
     // Call Groq API
-    const systemPrompt = `You are "Chef Rannaghor", a legendary bilingual Bengali chef. Your goal is to suggest 2-3 delicious, authentic Bengali recipes based on the ingredients provided.
+    const systemPrompt = `You are "Chef Rannaghor", a legendary bilingual Bengali chef. Your goal is to suggest 2-3 delicious, authentic Bengali recipes based on the ingredients and preferences provided.
 You must respond ONLY with a JSON object in this format. Do not write any markdown headers, tags, or extra chat. Use this JSON format:
 {
   "recipes": [
     {
       "name_en": "Recipe name in English",
       "name_bn": "রেসিপির নাম বাংলায়",
-      "description_en": "Appetizing description in English focusing on why it fits the ingredients.",
+      "description_en": "Appetizing description in English focusing on why it fits the ingredients and style.",
       "description_bn": "উপাদানের সমন্বয়ে এই পদটি কেন তৈরি করা হলো তার বর্ণনা বাংলায়।",
       "prep_time": "15 mins",
       "cook_time": "30 mins",
       "difficulty": "Easy/Medium/Hard",
       "serving_size": "2-3 servings",
+      "calories": "e.g. 350 kcal",
+      "protein": "e.g. 15g",
       "ingredients_used": [
         { "name_en": "Ingredient Eng", "name_bn": "উপাদান বাংলা", "amount": "quantity details" }
       ],
@@ -361,9 +486,9 @@ You must respond ONLY with a JSON object in this format. Do not write any markdo
 }`;
 
     const userPrompt = `I have the following ingredients:
-- Main Proteins: ${proteinDetails.map(p => `${p.name} (${p.bn})`).join(', ') || 'None selected'}
-- Vegetables: ${vegDetails.map(v => `${v.name} (${v.bn})`).join(', ') || 'None selected'}
-- Spices & Pantry: ${activeSpices.join(', ') || 'Only water/oil'}
+- Main Proteins: ${proteinDetails.join(', ') || 'None selected'}
+- Vegetables (with quantities): ${vegDetails.join(', ') || 'None selected'}
+- Spices & Pantry (with quantities): ${activeSpices.join(', ') || 'Only water/oil'}
 - Extra custom items: ${customIngredients.join(', ') || 'None'}
 
 Preferences:
@@ -371,8 +496,9 @@ Preferences:
 - Spice Level: ${spiceLevel}
 - Meal Type: ${mealType}
 - Maximum Cooking Time: ${timeLimit}
+- Dish Style/Preference: ${foodStyle} (e.g. Simple, Rich, Junk/Street Food)
 
-Suggest 2 to 3 Bengali recipes that match these. Optimize to use as many of my ingredients as possible. If some ingredients are missing but highly common or can be bought, list them in "ingredients_missing". Make sure the instructions are extremely easy to follow step-by-step and have authentic Bengali flavors.`;
+Suggest 2 to 3 Bengali recipes that match these. Optimize to use as many of my ingredients as possible, adhering closely to the quantities provided and the requested Dish Style. If some ingredients are missing but highly common or can be bought, list them in "ingredients_missing". Make sure the instructions are extremely easy to follow step-by-step and have authentic Bengali flavors. Return the calories and protein content for each recipe in the requested format.`;
 
     try {
       const headers = {
@@ -523,7 +649,7 @@ Provide a warm, expert cooking advice. Keep it short (2-3 sentences max). Answer
     }
   };
 
-  const filteredVegetables = VEGETABLES.filter(v => 
+  const filteredVegetables = [...VEGETABLES, ...addedVegetables].filter(v => 
     v.name.toLowerCase().includes(veggieQuery.toLowerCase()) || 
     v.bn.includes(veggieQuery)
   );
@@ -597,7 +723,7 @@ Provide a warm, expert cooking advice. Keep it short (2-3 sentences max). Answer
               {t.proteins}
             </h2>
             <div className="ingredients-flex-grid">
-              {PROTEINS.map(p => {
+              {[...PROTEINS, ...addedProteins].map(p => {
                 const isSelected = selectedProteins.includes(p.id);
                 return (
                   <div 
@@ -611,9 +737,52 @@ Provide a warm, expert cooking advice. Keep it short (2-3 sentences max). Answer
                     <div className="ingredient-icon-wrapper">{p.icon}</div>
                     <div className="ingredient-name">{p.name}</div>
                     <div className="ingredient-bengali-name bengali-text">{p.bn}</div>
+
+                    {isSelected && (
+                      <div className="quantity-select-inline" onClick={e => e.stopPropagation()}>
+                        <input 
+                          type="number" 
+                          min="0.1" 
+                          step="any"
+                          className="quantity-val-input" 
+                          value={ingredientQuantities[p.id]?.qty || 500} 
+                          onChange={e => handleQuantityChange(p.id, parseFloat(e.target.value) || 0)} 
+                        />
+                        <select 
+                          className="quantity-unit-select"
+                          value={ingredientQuantities[p.id]?.unit || 'g'}
+                          onChange={e => handleUnitChange(p.id, e.target.value)}
+                        >
+                          <option value="g">g</option>
+                          <option value="kg">kg</option>
+                          <option value="pcs">pcs</option>
+                        </select>
+                      </div>
+                    )}
                   </div>
                 );
               })}
+            </div>
+            {/* Custom Protein addition */}
+            <div className="category-custom-add" onClick={e => e.stopPropagation()}>
+              <form 
+                onSubmit={e => {
+                  e.preventDefault();
+                  handleAddCustomItem('protein');
+                }} 
+                className="custom-add-row"
+              >
+                <input 
+                  type="text" 
+                  className="custom-add-input"
+                  placeholder={lang === 'bn' ? "নতুন প্রোটিন যোগ করুন..." : "Add custom protein..."}
+                  value={customInputs.protein || ''}
+                  onChange={e => setCustomInputs(prev => ({ ...prev, protein: e.target.value }))}
+                />
+                <button type="submit" className="btn btn-primary custom-add-btn">
+                  <Plus size={14} />
+                </button>
+              </form>
             </div>
           </div>
 
@@ -651,9 +820,53 @@ Provide a warm, expert cooking advice. Keep it short (2-3 sentences max). Answer
                     <div className="ingredient-icon-wrapper">{v.icon}</div>
                     <div className="ingredient-name">{v.name}</div>
                     <div className="ingredient-bengali-name bengali-text">{v.bn}</div>
+
+                    {isSelected && (
+                      <div className="quantity-select-inline" onClick={e => e.stopPropagation()}>
+                        <input 
+                          type="number" 
+                          min="0.1" 
+                          step="any"
+                          className="quantity-val-input" 
+                          value={ingredientQuantities[v.id]?.qty || 500} 
+                          onChange={e => handleQuantityChange(v.id, parseFloat(e.target.value) || 0)} 
+                        />
+                        <select 
+                          className="quantity-unit-select"
+                          value={ingredientQuantities[v.id]?.unit || 'g'}
+                          onChange={e => handleUnitChange(v.id, e.target.value)}
+                        >
+                          <option value="g">g</option>
+                          <option value="kg">kg</option>
+                          <option value="pcs">pcs</option>
+                        </select>
+                      </div>
+                    )}
                   </div>
                 );
               })}
+            </div>
+
+            {/* Custom Vegetable addition */}
+            <div className="category-custom-add" onClick={e => e.stopPropagation()}>
+              <form 
+                onSubmit={e => {
+                  e.preventDefault();
+                  handleAddCustomItem('vegetable');
+                }} 
+                className="custom-add-row"
+              >
+                <input 
+                  type="text" 
+                  className="custom-add-input"
+                  placeholder={lang === 'bn' ? "নতুন সবজি যোগ করুন..." : "Add custom vegetable..."}
+                  value={customInputs.vegetable || ''}
+                  onChange={e => setCustomInputs(prev => ({ ...prev, vegetable: e.target.value }))}
+                />
+                <button type="submit" className="btn btn-primary custom-add-btn">
+                  <Plus size={14} />
+                </button>
+              </form>
             </div>
 
             {/* Custom Input Tag Section */}
@@ -691,8 +904,8 @@ Provide a warm, expert cooking advice. Keep it short (2-3 sentences max). Answer
               {t.spices}
             </h2>
             <div className="spices-shelf">
-              {SPICES.map(s => {
-                const state = spiceCabinet[s.id];
+              {[...SPICES, ...addedSpices].map(s => {
+                const state = spiceCabinet[s.id] || { active: false, level: 'medium' };
                 return (
                   <div key={s.id} className={`spice-row ${state.active ? 'has-spice' : ''}`}>
                     <div className="spice-info" onClick={() => handleSpiceToggle(s.id)} style={{ cursor: 'pointer' }}>
@@ -704,6 +917,31 @@ Provide a warm, expert cooking advice. Keep it short (2-3 sentences max). Answer
                     </div>
                     
                     <div className="spice-controls">
+                      {state.active && (
+                        <div className="spice-qty-wrapper" onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                          <input 
+                            type="number" 
+                            min="0.1" 
+                            step="any"
+                            className="spice-qty-input" 
+                            value={ingredientQuantities[s.id]?.qty || 2} 
+                            onChange={e => handleQuantityChange(s.id, parseFloat(e.target.value) || 0)} 
+                          />
+                          <select 
+                            className="spice-unit-select"
+                            value={ingredientQuantities[s.id]?.unit || 'tbsp'}
+                            onChange={e => handleUnitChange(s.id, e.target.value)}
+                          >
+                            <option value="g">g</option>
+                            <option value="kg">kg</option>
+                            <option value="tsp">tsp</option>
+                            <option value="tbsp">tbsp</option>
+                            <option value="cup">cup</option>
+                            <option value="pcs">pcs</option>
+                          </select>
+                        </div>
+                      )}
+
                       <button 
                         className={`spice-toggle-switch ${state.active ? 'active' : ''}`}
                         onClick={() => handleSpiceToggle(s.id)}
@@ -726,6 +964,28 @@ Provide a warm, expert cooking advice. Keep it short (2-3 sentences max). Answer
                   </div>
                 );
               })}
+            </div>
+
+            {/* Custom Spice addition */}
+            <div className="category-custom-add" onClick={e => e.stopPropagation()} style={{ marginTop: '1.25rem' }}>
+              <form 
+                onSubmit={e => {
+                  e.preventDefault();
+                  handleAddCustomItem('spice');
+                }} 
+                className="custom-add-row"
+              >
+                <input 
+                  type="text" 
+                  className="custom-add-input"
+                  placeholder={lang === 'bn' ? "নতুন মশলা/উপাদান..." : "Add custom pantry..."}
+                  value={customInputs.spice || ''}
+                  onChange={e => setCustomInputs(prev => ({ ...prev, spice: e.target.value }))}
+                />
+                <button type="submit" className="btn btn-primary custom-add-btn">
+                  <Plus size={14} />
+                </button>
+              </form>
             </div>
           </div>
 
@@ -836,6 +1096,37 @@ Provide a warm, expert cooking advice. Keep it short (2-3 sentences max). Answer
                   </button>
                 </div>
               </div>
+
+              {/* Dish Style / Food Style */}
+              <div>
+                <div className="pref-group-title">{t.foodStyle}</div>
+                <div className="pref-options" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                  <button 
+                    className={`pref-btn ${foodStyle === 'any' ? 'active' : ''}`}
+                    onClick={() => setFoodStyle('any')}
+                  >
+                    {t.foodStyleAny}
+                  </button>
+                  <button 
+                    className={`pref-btn ${foodStyle === 'simple' ? 'active' : ''}`}
+                    onClick={() => setFoodStyle('simple')}
+                  >
+                    {t.foodStyleSimple}
+                  </button>
+                  <button 
+                    className={`pref-btn ${foodStyle === 'rich' ? 'active' : ''}`}
+                    onClick={() => setFoodStyle('rich')}
+                  >
+                    {t.foodStyleRich}
+                  </button>
+                  <button 
+                    className={`pref-btn ${foodStyle === 'junk' ? 'active' : ''}`}
+                    onClick={() => setFoodStyle('junk')}
+                  >
+                    {t.foodStyleJunk}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -941,6 +1232,18 @@ Provide a warm, expert cooking advice. Keep it short (2-3 sentences max). Answer
                     <Utensils size={14} />
                     {t.servings}: {recipes[activeRecipeIndex].serving_size}
                   </span>
+                  {recipes[activeRecipeIndex].calories && (
+                    <span className="stat-badge calories-badge" style={{ backgroundColor: 'rgba(240, 147, 43, 0.1)', color: '#d35400', borderColor: 'rgba(240, 147, 43, 0.2)' }}>
+                      <Flame size={14} />
+                      {t.calories}: {recipes[activeRecipeIndex].calories}
+                    </span>
+                  )}
+                  {recipes[activeRecipeIndex].protein && (
+                    <span className="stat-badge protein-badge" style={{ backgroundColor: 'rgba(52, 152, 219, 0.1)', color: '#2980b9', borderColor: 'rgba(52, 152, 219, 0.2)' }}>
+                      <Sparkles size={14} />
+                      {t.protein}: {recipes[activeRecipeIndex].protein}
+                    </span>
+                  )}
                 </div>
 
                 {/* TTS Reader player */}
@@ -1148,8 +1451,8 @@ Provide a warm, expert cooking advice. Keep it short (2-3 sentences max). Answer
 
       {/* Footer */}
       <footer style={{ marginTop: 'auto', paddingTop: '3rem', borderTop: '1px solid var(--border)', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-light)' }}>
-        <p className="bengali-text">তৈরি করেছেন Antigravity AI • রান্নাঘর সহায়িকা ২০২৬</p>
-        <p style={{ marginTop: '0.25rem' }}>Powered by Groq Free API & React Vite</p>
+        <p className="bengali-text"> রান্নাঘর সহায়িকা ২০২৬</p>
+        <p style={{ marginTop: '0.25rem' }}>Powered by Groq</p>
       </footer>
     </div>
   );
